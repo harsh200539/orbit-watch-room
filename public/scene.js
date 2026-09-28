@@ -36,6 +36,18 @@ try {
  const screen=new T.Group();screen.position.set(0,-.19,1.57);screen.rotation.x=-.06;rig.add(screen);
  box(3.42,2.03,.16,trim,0,0,0,screen);box(3.23,1.84,.025,silver,0,0,.095,screen);
  const panel=add(new T.PlaneGeometry(3.14,1.76),soft,screen,0,0,.114);
+ // Two weighted doors make the display feel like an object being unveiled.
+ // They separate in depth as well as sideways, so the reveal reads from an angle.
+ const doorMaterial=new T.MeshStandardMaterial({color:0x263239,metalness:.88,roughness:.24,side:T.DoubleSide});
+ const doorLeft=box(1.59,1.77,.045,doorMaterial,-.79,0,.15,screen);
+ const doorRight=box(1.59,1.77,.045,doorMaterial,.79,0,.15,screen);
+ const doorSeams=[];
+ for(const [door,side] of [[doorLeft,-1],[doorRight,1]]){
+  for(let i=0;i<5;i++){const seam=box(.028,1.48,.008,i===2?lime:silver,side*(.2+i*.27),0,.183,screen);seam.material=seam.material.clone();seam.material.transparent=true;seam.material.opacity=i===2?.7:.22;doorSeams.push(seam)}
+ }
+ const core=add(new T.RingGeometry(.18,.27,48),lime,screen,0,0,.21);
+ const coreInner=sphere(.07,silver,0,0,.23,screen);
+ const edgeLight=new T.PointLight(0xb6f264,8,5);edgeLight.position.set(0,0,.7);screen.add(edgeLight);
  const inner=new T.Group();inner.position.z=.124;screen.add(inner);
  const planet=sphere(.4,lime,.44,.11,0,inner);planet.scale.z=.25;
  const rings=[.58,.8,1.06].map((radius,i)=>{const tor=add(new T.TorusGeometry(radius,.012,7,90),i===1?silver:lime,inner,.44,.11,-.03);tor.rotation.y=.65;return tor});
@@ -46,9 +58,11 @@ try {
  for(let i=0;i<3;i++){const ring=new T.Mesh(new T.TorusGeometry(2.65+i*.42,.009,5,130),i===1?silver:lime);ring.rotation.set(.45+i*.26,.3+i*.4,i*.17);ring.material=ring.material.clone();ring.material.transparent=true;ring.material.opacity=i===1?.25:.42;orbit.add(ring)}
  const positions=new Float32Array(240*3);for(let i=0;i<240;i++){const a=Math.random()*Math.PI*2,r=2.9+Math.random()*4.2;positions[i*3]=Math.cos(a)*r;positions[i*3+1]=(Math.random()-.5)*7;positions[i*3+2]=Math.sin(a)*r-1}
  const stars=new T.BufferGeometry();stars.setAttribute('position',new T.BufferAttribute(positions,3));scene.add(new T.Points(stars,new T.PointsMaterial({color:0xb6f264,size:.018,transparent:true,opacity:.67})));
- let currentHolder=holder,room=false,play=false,videoTexture=null,scrollTarget=0,camZ=9.7,camY=1.1,activeVideo=null;
+ const blast=new T.Group();scene.add(blast);
+ for(let i=0;i<30;i++){const a=i*Math.PI*2/30;const ray=add(new T.BoxGeometry(.012,.012,.8+Math.random()*1.6),i%3?lime:silver,blast,Math.cos(a)*2.3,Math.sin(a)*2.3,1.2);ray.rotation.z=a-Math.PI/2;ray.rotation.x=.36;ray.material=ray.material.clone();ray.material.transparent=true;ray.material.opacity=.25}
+ let currentHolder=holder,room=false,play=false,videoTexture=null,scrollTarget=0,camZ=9.7,camY=1.1,camX=0,activeVideo=null;
  const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
- function scroll(){if(room)return;scrollTarget=clamp(scrollY/Math.max(innerHeight,1),0,1);document.querySelector('.stage-wrap').style.opacity=scrollY>document.querySelector('#landing-shell').offsetHeight-innerHeight*.16?'0':'1'}
+ function scroll(){if(room)return;scrollTarget=clamp(scrollY/Math.max(innerHeight,1),0,1);document.documentElement.style.setProperty('--journey',`${scrollTarget*100}%`);document.querySelector('.stage-wrap').style.opacity=scrollY>document.querySelector('#landing-shell').offsetHeight-innerHeight*.16?'0':'1'}
  addEventListener('scroll',scroll,{passive:true});scroll();
  function resize(){const w=currentHolder.clientWidth,h=currentHolder.clientHeight;if(w&&h){renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix()}}addEventListener('resize',resize);resize();
  window.orbitEnterRoom=()=>{room=true;document.body.classList.add('room-open');currentHolder=document.querySelector('#room-stage');currentHolder.append(renderer.domElement);resize()};
@@ -56,7 +70,8 @@ try {
  window.orbitZoom=()=>{if(!room)return;play=true;document.querySelector('#theater').classList.add('is-portal');setTimeout(()=>{if(play)document.querySelector('#theater').classList.add('playing')},1550)};
  window.orbitStop=()=>{play=false;document.querySelector('#theater').classList.remove('is-portal','playing')};
  if(!document.querySelector('#room').classList.contains('hidden')){window.orbitEnterRoom();const live=document.querySelector('#remote-video:not(.hidden), #local-video:not(.hidden)');if(live)window.orbitSetVideo(live)}
- const clock=new T.Clock();function frame(){requestAnimationFrame(frame);const t=clock.getElapsedTime();const targetZ=room?(play?2.9:8.6):9.7-scrollTarget*4.7;const targetY=room?(play?-.13:.6):1.1-scrollTarget*.72;camZ+=(targetZ-camZ)*.045;camY+=(targetY-camY)*.045;camera.position.set(0,camY,camZ);camera.lookAt(0,room&&play?-.15:.15,0);
- rig.position.y=Math.sin(t*.85)*.1;const targetRotation=room?(play?0:-.08):-.2+scrollTarget*.26+Math.sin(t*.32)*.07;rig.rotation.y+=(targetRotation-rig.rotation.y)*.02;
- orbit.rotation.z=t*.05;orbit.rotation.y=t*.025;planet.rotation.y=t*.45;rings.forEach((r,i)=>r.rotation.z=t*(i%2?-.13:.09));renderer.render(scene,camera)}frame();
-} catch(error){console.warn('3D scene unavailable',error);holder.innerHTML='<div class="fallback-orbit">✦</div>';document.querySelector('#room-stage').innerHTML='<div class="fallback-orbit">✦</div>'}
+ const clock=new T.Clock();function frame(){requestAnimationFrame(frame);const t=clock.getElapsedTime();const reveal=room?1:clamp((scrollTarget-.18)/.62,0,1);const targetZ=room?(play?2.9:8.6):9.7-scrollTarget*4.7;const targetY=room?(play?-.13:.6):1.1-scrollTarget*.72;const targetX=room?0:Math.sin(scrollTarget*Math.PI)*.55;camZ+=(targetZ-camZ)*.045;camY+=(targetY-camY)*.045;camX+=(targetX-camX)*.045;camera.position.set(camX,camY,camZ);camera.lookAt(0,room&&play?-.15:.15,0);
+ rig.position.y=Math.sin(t*.85)*.1;const targetRotation=room?(play?0:-.08):-.32+scrollTarget*.42+Math.sin(t*.32)*.05;rig.rotation.y+=(targetRotation-rig.rotation.y)*.02;
+ doorLeft.position.x=-.79-reveal*1.9;doorRight.position.x=.79+reveal*1.9;doorLeft.position.z=.15+reveal*.6;doorRight.position.z=.15+reveal*.6;doorLeft.rotation.y=-reveal*.4;doorRight.rotation.y=reveal*.4;doorLeft.visible=doorRight.visible=reveal<.98&&!play;doorSeams.forEach((seam,i)=>{seam.visible=reveal<.98&&!play;seam.position.x=(i<5?-1:1)*(.2+(i%5)*.27)+(i<5?-1:1)*reveal*1.9;seam.position.z=.183+reveal*.6});core.visible=coreInner.visible=reveal<.95&&!play;
+ blast.scale.setScalar(.8+reveal*.45+(play?.35:0));blast.rotation.z=t*.035;blast.children.forEach(ray=>ray.material.opacity=(.08+reveal*.2)*(play?1.5:1));orbit.rotation.z=t*.05;orbit.rotation.y=t*.025;planet.rotation.y=t*.45;rings.forEach((r,i)=>r.rotation.z=t*(i%2?-.13:.09));renderer.render(scene,camera)}frame();
+} catch(error){console.warn('3D scene unavailable',error);const fallback=`<div class="fallback-scene"><div class="fallback-halo"></div><div class="fallback-person"><div class="fallback-head"><i></i></div><div class="fallback-body"></div><div class="fallback-arm left"></div><div class="fallback-arm right"></div></div><div class="fallback-display"><div class="fallback-content"><span>THE SIGNAL IS YOURS</span><strong>✦</strong><small>ORBIT / LIVE SPACE</small></div><div class="fallback-door left"></div><div class="fallback-door right"></div></div><div class="fallback-floor"></div></div>`;holder.innerHTML=fallback;document.querySelector('#room-stage').innerHTML=fallback;const scrollFallback=()=>document.documentElement.style.setProperty('--journey',`${Math.min(100,Math.max(0,scrollY/innerHeight*100))}%`);addEventListener('scroll',scrollFallback,{passive:true});scrollFallback();window.orbitEnterRoom=()=>{document.body.classList.add('room-open')};window.orbitSetVideo=video=>{if(video)window.orbitZoom();else window.orbitStop()};window.orbitZoom=()=>{document.querySelector('#theater').classList.add('is-portal');setTimeout(()=>document.querySelector('#theater')?.classList.add('playing'),1000)};window.orbitStop=()=>document.querySelector('#theater')?.classList.remove('is-portal','playing')}
