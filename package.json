@@ -1,0 +1,1 @@
+{"name":"orbit-watch-room","version":"1.1.0","private":true,"type":"module","scripts":{"start":"node dev-server.js","dev":"node dev-server.js"}}
