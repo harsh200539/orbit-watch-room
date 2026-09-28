@@ -6,7 +6,7 @@ A Vercel-ready static web app with Supabase Realtime signaling and WebRTC media 
 
 Vercel serves static files in `public/`. Supabase Realtime Presence lists active friends and Broadcast relays WebRTC offers, answers, and ICE candidates. Each room exists only while at least one participant remains connected. Media is peer to peer and is never recorded by this app. The six-character code is the room secret; only share it with people you want to join. Public Realtime channels do not provide access control beyond that code.
 
-The browser imports Supabase JS and Three.js from esm.sh. The Three.js scene animates with scroll, moves into the room, renders the live video as a VideoTexture, then zooms into full playback. Browsers with WebGL disabled show a fallback symbol. `public/config.js` contains only the public project URL and publishable key; never put a service role or secret key in frontend code.
+The browser imports Supabase JS and Three.js from esm.sh. The Three.js scene animates with scroll, adds a pointer-reactive portal field, moves into the room, renders the live video as a VideoTexture, then zooms into full playback. Browsers with WebGL disabled show a CSS portrait and live preview. The visual direction takes inspiration from ThreeUI's Portal Field, but the shader, character, and page are original to Orbit. `public/config.js` contains only the public project URL and publishable key; never put a service role or secret key in frontend code.
 
 ## Local run
 
