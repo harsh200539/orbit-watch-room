@@ -18,3 +18,8 @@
 @media(max-width:430px){.hero-copy h1{font-size:46px}.hero-copy>p{max-width:300px}.hero-meta{display:none}.stage-wrap{top:365px;height:calc(100vh - 385px)}.portal-copy{max-width:95%}.entry-card{padding:30px}.entry-card h2{font-size:38px}.controlbar{gap:4px}.controls{gap:5px}.control{padding:7px 9px}.control span{font-size:15px}}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}.primary,.secondary,.stage-wrap,.screen-empty,.theater > video,#portal-wipe,.fallback-door{transition:none}.sound-orbit i,.fallback-halo,.fallback-person{animation:none}}
 body.room-open .final-cta,body.room-open .footer{display:none}
+.hero-copy h1{font-size:clamp(61px,6.25vw,110px)}
+.portal-copy h2{font-size:clamp(60px,6.15vw,100px);white-space:normal}
+@media(max-width:760px){.hero-copy h1{font-size:clamp(47px,11vw,75px)}.portal-copy h2{font-size:clamp(45px,11vw,68px)}}
+@media(max-width:430px){.hero-copy h1{font-size:46px}}
+.hero-copy .host-note{max-width:370px;margin:16px 0 0;padding-left:12px;border-left:2px solid var(--ember);color:#c6b9c6;font:10px/1.5 'DM Mono',monospace;letter-spacing:.02em}
